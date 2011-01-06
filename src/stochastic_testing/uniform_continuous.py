@@ -3,14 +3,14 @@ from .structures import TestStatistic
 import numpy as np
 
 class ContinuousUniformDistribution(TestStatistic):
-    def __init__(self, samples, a=0, b=1, desc='Uniform distribution'):
+    def __init__(self, samples, bounds=(0, 1), desc='Uniform distribution'):
         self.samples = np.array(samples)
-        self.a = a
-        self.b = b
+        self.bounds = bounds
         self.desc = desc
         
     def pvalue(self):
-        normalized = (self.samples - self. a) / (self.b - self.a)
+        a, b = self.bounds 
+        normalized = (self.samples - a) / (b - a)
         K, pvalue = kstest(normalized, 'uniform') #@UnusedVariable
         return pvalue
     

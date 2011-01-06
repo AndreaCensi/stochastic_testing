@@ -13,11 +13,13 @@ class StochasticTest(object):
         self.results = []
         self._running_time = None
         self.command_desc = command.__name__
+        self.should_fail = False
         
     def running_time(self):
         if self._running_time is None:
             t0 = time.clock()
             result = self.run()
+            pv = result.pvalue()
             self.results.append(result)
             self._running_time = time.clock() - t0
             
@@ -64,15 +66,35 @@ class StochasticTestManager(object):
         times = int(np.floor(remaining / total))
         print('I have time for %d repeats' % times) 
         
-        print('Running %d repeats' % times) 
+        significance = 0.05
+        print('Running %d repeats' % times)
+        msg = "" 
+        num_failed = 0
         for t in self.tests:
             pvalues = t.run_stochastic(times)
             pv = pvalues.pvalue()
-            print('- pvalue %8.5f (%d samples) %s' % (pv, pvalues.samples.size, t))
-            print pvalues.samples
+            if t.should_fail:
+                failed = pv > significance
+            else:
+                failed = pv < significance
+                 
+            tmsg = ('- pvalue %8.5f (%d samples) should_fail: %5s %s\n' % 
+                    (pv, pvalues.samples.size, t.should_fail, t))
+            for pvalue in [0.5, 0.05, 0.01]:
+                perc = (pvalues.samples < pvalue).mean()
+                tmsg += ('  * pvalue below %.3f: %.3f\n' % (pvalue, perc))
+            if failed:
+                num_failed += 1  
+                msg += tmsg
+            print(tmsg)
         
         t1 = time.clock() - t0
-        print("Used %f seconds" % t1)
+        print("Used %f seconds (%f allowed)" % (t1, time_limit))
+        
+        if msg:
+            num_expected = len(self.tests) * significance
+            raise Exception('%d tests failed their significance test (%.2f expected). \n%s' % 
+                            (num_failed, num_expected, msg))
 
 StochasticTestManager.main = StochasticTestManager()
 
@@ -88,5 +110,16 @@ def stochastic(f):
             add_tuple(x)
     else:
         add_tuple(result)
-    
+    return f
+
+def stochastic_fail(f):
+    stm = StochasticTestManager.main
+    # XXX
+    n = len(stm.tests)
+    res = stochastic(f)
+    for t in stm.tests[n:]:
+        t.should_fail = True
+    return res
+
+
     

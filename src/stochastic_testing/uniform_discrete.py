@@ -1,4 +1,4 @@
-from scipy.stats.stats import chisqprob, kstest
+from scipy.stats.stats import chisqprob
 from .structures import TestStatistic
 
 def uniform_dist_pvalue(dist):
@@ -6,7 +6,8 @@ def uniform_dist_pvalue(dist):
     Ei = dist.sum() / dist.size
     Oi = dist
     chi2 = ((Ei - Oi) ** 2 / Ei).sum()
-    pvalue = chisqprob(chi2, dist.size - 1) 
+    dof = dist.size - 1
+    pvalue = chisqprob(chi2, dof) 
     return pvalue 
         
 class DiscreteUniformDistribution(TestStatistic):
