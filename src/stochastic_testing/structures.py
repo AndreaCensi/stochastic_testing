@@ -93,9 +93,12 @@ class StochasticTestManager(object):
         
         if msg:
             num_expected = len(self.tests) * significance
-            raise Exception('%d tests failed their significance test (%.2f expected). \n%s' % 
-                            (num_failed, num_expected, msg))
+            error = ('%d tests failed their significance test (%.2f expected).'
+                     ' \n%s' % (num_failed, num_expected, msg))
+            raise Exception(error)
 
+    main = None
+    
 StochasticTestManager.main = StochasticTestManager()
 
 def stochastic(f):
